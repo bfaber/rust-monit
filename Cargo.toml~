@@ -1,7 +1,0 @@
-[package]
-name = "monit"
-version = "0.1.0"
-authors = ["bfaber <bfaber1@gmail.com>"]
-
-[dependencies]
-regex = "1"
