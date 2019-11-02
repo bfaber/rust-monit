@@ -1,2 +1,9 @@
 /target
 **/*.rs.bk
+
+# log files
+**/*.log
+
+# ~ and # files produced by emacs.
+**/\#*\#
+**/*~
