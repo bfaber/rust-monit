@@ -24,8 +24,6 @@ pub fn search<'a>(regex: &Regex, text_block: &'a str) -> Vec<&'a str> {
 pub fn read_log(config: &mut ParserConfig) -> Result<u32, Box<dyn Error>> {
     let t0 = Instant::now();
 
-//    let mut reader = BufReader::new(&config.file);
-//    let mut file_handler = FileHandler::new(config.base_config.filename.clone());
     let mut text_block = String::new();
 
     let mut sendCt: u32 = 0;

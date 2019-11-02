@@ -1,7 +1,0 @@
-
-pub struct Record {
-    pub collectionName: String,
-    pub key: String,
-    pub records: Vec<String>,
-}
-
