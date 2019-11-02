@@ -1,0 +1,22 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1671
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 Rust Monit todo:\
+\
+1. Read a running file.\
+	a. resume reading same file.\
+\
+2. Read multiple configs. - Design for this:\
+	a. refactor get_config to generate a Vec<Config>.  This is only a few lines of code.\
+	b. map those configs by filename, and pass to the log reader.\
+	c. should each config have a channel per collection?  That channel is then transmitted through the read_log function and read from in the recordprocessor.  the recordprocessor could try_recv to pull from the channel without blocking.  If blocking puts the thread to sleep for a while, then maybe that would be ok to just use recv.  This would get more sophisticated and could change the sleeping time depending on how large the transactions are relative to the max size.   \
+So if we have a channel per collection, then we can just flush the parsed values down the channel as we get them.  The record processor thread can then batch them up and send to mongo as it goes.  \
+The record processor just has a to the same config objects that the log reader has.  This will make things easy.  \
+3. mongo transactions?\
+4. separate into two threads.\
+5. Log rolling. \
+}

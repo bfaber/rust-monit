@@ -1,0 +1,18 @@
+// can't make fields mutable, so no mut here.
+pub struct Config {
+    pub regex: Regex,
+    pub filename: String,
+    pub results: Vec<String>,
+}
+
+impl Config {
+    pub fn new(args: &[String]) -> Result<Config, &'static str> {
+        if args.len() < 3 {
+            return Err("not enough args");
+        }
+        let regex = Regex::new(args[1].as_str()).unwrap();
+        let filename = args[2].clone();
+        let results = Vec::new();
+        Ok(Config { regex, filename, results })
+    }
+}

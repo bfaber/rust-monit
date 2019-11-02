@@ -1,0 +1,85 @@
+bfaber-ltm:monit bfaber$ cargo run --release 127.0.0.1 27017 test rustRunningConfig
+    Finished release [optimized] target(s) in 0.10s
+         Running `target/release/monit 127.0.0.1 27017 test rustRunningConfig`
+	 ["target/release/monit", "127.0.0.1", "27017", "test", "rustRunningConfig"]
+	 filename: /Users/bfaber/Desktop/play/cpp/monit/test/runningLog.log
+	 regex: requestId": "([-a-f0-9]{36})
+	 key: requestId
+	 collectionName: rustRunning
+	 Read block 27469600 bytes long
+	 Read block 438880 bytes long
+	 Read block 6880 bytes long
+	 Parsed 174471 regexes
+	 Read/parse Duration: 272.552342ms
+	 parsed 174471 lines from log
+	 Pre-insert records count: 100000
+	 Post insert ack: 100000
+	 Pre-insert records count: 74471
+	 Post insert ack: 74471
+	 Insert dt: 4.406857875s
+	 Read block 7159840 bytes long
+	 Read block 99200 bytes long
+	 Read block 960 bytes long
+	 Read block 160 bytes long
+	 Parsed 45376 regexes
+	 Read/parse Duration: 80.705366ms
+	 parsed 45376 lines from log
+	 Pre-insert records count: 45376
+	 Post insert ack: 45376
+	 Insert dt: 1.088058801s
+	 Read block 1658880 bytes long
+	 Read block 18880 bytes long
+	 Read block 320 bytes long
+	 Parsed 10488 regexes
+	 Read/parse Duration: 16.169798ms
+	 parsed 10488 lines from log
+	 Pre-insert records count: 10488
+	 Post insert ack: 10488
+	 Insert dt: 262.982488ms
+	 Read block 368640 bytes long
+	 Read block 5600 bytes long
+	 Read block 160 bytes long
+	 Parsed 2340 regexes
+	 Read/parse Duration: 3.920677ms
+	 parsed 2340 lines from log
+	 Pre-insert records count: 2340
+	 Post insert ack: 2340
+	 Insert dt: 60.630143ms
+	 Read block 86240 bytes long
+	 Read block 1280 bytes long
+	 Parsed 547 regexes
+	 Read/parse Duration: 843.853µs
+	 parsed 547 lines from log
+	 Pre-insert records count: 547
+	 Post insert ack: 547
+	 Insert dt: 18.699347ms
+	 Read block 19680 bytes long
+	 Read block 480 bytes long
+	 Read block 160 bytes long
+	 Parsed 127 regexes
+	 Read/parse Duration: 374.326µs
+	 parsed 127 lines from log
+	 Pre-insert records count: 127
+	 Post insert ack: 127
+	 Insert dt: 3.801373ms
+	 Read block 5440 bytes long
+	 Read block 160 bytes long
+	 Parsed 35 regexes
+	 Read/parse Duration: 175.154µs
+	 parsed 35 lines from log
+	 Pre-insert records count: 35
+	 Post insert ack: 35
+	 Insert dt: 919.587µs
+	 Read block 1120 bytes long
+	 Parsed 7 regexes
+	 Read/parse Duration: 28.226µs
+	 parsed 7 lines from log
+	 Pre-insert records count: 7
+	 Post insert ack: 7
+	 Insert dt: 386.964µs
+	 Parsed 0 regexes
+	 Read/parse Duration: 5.969µs
+	 parsed 0 lines from log
+	 Total Duration: 6.226108895s
+	 bfaber-ltm:monit bfaber$
+	 

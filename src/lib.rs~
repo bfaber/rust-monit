@@ -1,0 +1,46 @@
+use std::error::Error;
+use std::fs::File;
+use std::io::prelude::*;
+use std::io::BufReader;
+
+struct Config {
+    regex: String,
+    filename: String,
+}
+
+impl Config {
+    fn new(args: &[String]) -> Result<Config, &'static str> {
+        if args.len() < 3 {
+            return Err("not enough args");
+        }
+        let regex = args[1].clone();
+        let filename = args[2].clone();
+
+        Ok(Config { regex, filename })
+    }
+}
+
+fn run(config: Config) -> Result<(), Box<Error>> {
+    
+    println!("Opening file... {}", config.filename);
+    println!("Applying regex... {}", config.regex);
+
+    let f = File::open(config.filename)?;
+
+    let mut reader = BufReader::new(f);
+
+    let mut line = String::new();
+    
+    loop {
+        
+        let len = reader.read_line(&mut line)?;
+        if len == 0 {
+            break;
+        }
+        //println!("Line is {} bytes long", len);
+//        println!("line is {}", line);
+  //      line.clear();
+    }
+
+    Ok(())
+}
