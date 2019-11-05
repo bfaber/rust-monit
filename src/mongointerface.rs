@@ -29,7 +29,8 @@ impl MongoInterface {
         MongoInterface { host, port, client }
     }
     
-    pub fn get_config(&mut self, database: String, configCollection: String) -> Result<(RecordConfig, ParserConfig), Box<dyn Error>> {
+    pub fn get_config(&mut self, database: String, configCollection: String) -> Vec<Result<(RecordConfig, ParserConfig), Box<dyn Error>>> {
+        let mut configs = Vec::new();
         
         let coll = self.client.db(database.as_str()).collection(configCollection.as_str());
         
@@ -37,14 +38,13 @@ impl MongoInterface {
         let cursor = coll.find(Some(doc!{}), None)
             .ok().expect("Failed to execute find.");
 
-        let mut regStr    = String::new();
-        let mut filename  = String::new();
-        let mut key       = String::new();
-        let mut collectionName = String::new();
-
-
         // cursor.next() returns an Option<Result<Document>>
         for result in cursor {
+            let mut regStr         = String::new();
+            let mut filename       = String::new();
+            let mut key            = String::new();
+            let mut collectionName = String::new();
+
             if let Ok(item) = result {
                 if let Some(&Bson::String(ref filenm)) = item.get("filename") {
                     println!("filename: {}", filenm);
@@ -63,9 +63,11 @@ impl MongoInterface {
                     collectionName = collNm.clone();
                 }            
             }
+            configs.push(Config::new(regStr, filename, key, collectionName));
         }
 
-        Config::new(regStr, filename, key, collectionName)
+        configs
+
     }
 
     pub fn insertRecords(&mut self, config: &RecordConfig) {
@@ -80,12 +82,13 @@ impl MongoInterface {
                     break;
                 }            
             }
-
-            if docs.len() == 0 {
+            
+            let docs_len = docs.len();
+            if docs_len == 0 {
                 break;
             }
             
-            println!("Pre-insert records count: {}", docs.len());
+            println!("Pre-insert records count: {}", docs_len);
 
             // need to figure out how to use this db obj on self so that I can call
             // insertRecords in a loop
@@ -97,7 +100,12 @@ impl MongoInterface {
             match insert_result {
                 Ok(res) => {
                     if res.acknowledged {
-                        println!("Post insert ack: {}", res.inserted_ids.unwrap().len());
+                        let ack_len = res.inserted_ids.unwrap().len();
+                        println!("Post insert ack: {}", ack_len);
+                        if ack_len == docs_len {
+                            // only loop if theres more docs in this iteration
+                            break; 
+                        }
                     } else {
                         println!("Unacknowledged insert!");
                     }
