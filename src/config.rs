@@ -24,24 +24,27 @@ pub struct RecordConfig {
 pub struct ParserConfig {
     pub base_config: Config,
     pub regex: Regex,
-    pub file_handler: FileHandler,
     pub channel_tx: Sender<String>,
+}
+
+pub struct RegexBundle {
+    pub parser_configs: Vec<ParserConfig>,
+    pub file_handler: FileHandler,
 }
 
 impl Config {
     pub fn new(regStr: String, filename: String, key: String, collectionName: String) -> Result<(RecordConfig, ParserConfig), Box<dyn Error>>  {
 
-        let regex = Regex::new(regStr.as_str()).unwrap();
+        // todo: maybe pull out the regex instantiation to make the Config generation certain
+        let regex = Regex::new(regStr.as_str())?;
         let (sender, receiver) = channel();
-//        let file = File::open(&filename)?;
-        let fileHandle = FileHandler::new(filename.clone())?;
         let channel_tx = sender;
         let channel_rx = receiver;
         let base_config = Config { filename, key, collectionName };
         let config_copy = base_config.clone();
         let record_config = RecordConfig::new( base_config, channel_rx);
 
-        let parse_config = ParserConfig::new( config_copy, regex, fileHandle, channel_tx );
+        let parse_config = ParserConfig::new( config_copy, regex, channel_tx );
 
         Ok((record_config, parse_config))
     }               
@@ -54,7 +57,27 @@ impl RecordConfig {
 }
 
 impl ParserConfig {
-    pub fn new(base_config: Config, regex: Regex, file_handler: FileHandler, channel_tx: Sender<String>) -> ParserConfig {
-        ParserConfig{ base_config, regex, file_handler, channel_tx }
+    pub fn new(base_config: Config, regex: Regex, channel_tx: Sender<String>) -> ParserConfig {
+        ParserConfig{ base_config, regex, channel_tx }
+    }
+}
+
+impl RegexBundle {
+    /*
+    pub fn new(filename: String, config: ParserConfig) -> Result<RegexBundle, Box<dyn Error>> {
+        let file_handler = FileHandler::new(filename)?;
+        let mut parser_configs = Vec::new();
+        parser_configs.push(config);
+        Ok(RegexBundle{ parser_configs, file_handler })
+    }
+     */
+    pub fn new(filename: String) -> Result<RegexBundle, Box<dyn Error>> {
+        let file_handler = FileHandler::new(filename)?;
+        let mut parser_configs = Vec::new();
+        Ok(RegexBundle{ parser_configs, file_handler })
+    }
+
+    pub fn add_parse_config(&mut self, config: ParserConfig) {
+        self.parser_configs.push(config);
     }
 }

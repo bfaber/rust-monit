@@ -21,7 +21,7 @@ pub fn search<'a>(regex: &Regex, text_block: &'a str) -> Vec<&'a str> {
     results
 }
 
-pub fn read_log(config: &mut ParserConfig) -> Result<u32, Box<dyn Error>> {
+pub fn read_log(file_handler: &mut FileHandler, configs: &mut Vec<ParserConfig>) -> Result<u32, Box<dyn Error>> {
     let t0 = Instant::now();
 
     let mut text_block = String::new();
@@ -31,17 +31,18 @@ pub fn read_log(config: &mut ParserConfig) -> Result<u32, Box<dyn Error>> {
     loop {
         text_block.clear();
         
-        let len = config.file_handler.read_file(&mut text_block)?;
+        let len = file_handler.read_file(&mut text_block)?;
         if len == 0 {
             break;
         }
         println!("Read block {} bytes long", len);
-
-        let results = search(&config.regex, &text_block);
+        for config in configs.iter() {
+            let results = search(&config.regex, &text_block);
         
-        for res in results {
-            config.channel_tx.send(String::from(res)).unwrap();
-            sendCt += 1;
+            for res in results {
+                config.channel_tx.send(String::from(res)).unwrap();
+                sendCt += 1;
+            }
         }
     }
 
