@@ -2,17 +2,19 @@
 
 use regex::Regex;
 use std::error::Error;
+use std::process;
+use std::time::{Instant, Duration};
 
 use mongodb::{Bson, bson, doc};
 use mongodb::{Client, ThreadedClient};
 use mongodb::db::ThreadedDatabase;
-use std::process;
 
 use config::Config;
 use config::RecordConfig;
 use config::ParserConfig;
 
 use recordprocessor::Record;
+
 
 pub struct MongoInterface {
     host: String,
@@ -25,6 +27,12 @@ impl MongoInterface {
     pub fn new(host:String, port: u16) -> MongoInterface {
 
         let client = Client::connect(&host, port).expect("Problem connecting to Mongo");
+        /*
+        let uri = Uri::new("mongodb://localhost:27017/").unwrap();
+        let pool = Arc::new(ClientPool::new(uri.clone(), None));
+        let client = pool.pop();
+        client.get_server_status(None).unwrap();
+         */
 
         MongoInterface { host, port, client }
     }
@@ -87,7 +95,8 @@ impl MongoInterface {
             if docs_len == 0 {
                 break;
             }
-            
+
+            let insertDt = Instant::now();
             println!("Pre-insert records count: {}", docs_len);
 
             // need to figure out how to use this db obj on self so that I can call
@@ -104,6 +113,9 @@ impl MongoInterface {
                         println!("Post insert ack: {}", ack_len);
                         if ack_len == docs_len {
                             // only loop if theres more docs in this iteration
+                            println!("DT::MongoInsert::{} {:?}",
+                                     config.base_config.filename,
+                                     insertDt.elapsed());
                             break; 
                         }
                     } else {

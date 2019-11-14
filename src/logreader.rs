@@ -22,7 +22,7 @@ pub fn search<'a>(regex: &Regex, text_block: &'a str) -> Vec<&'a str> {
 }
 
 pub fn read_log(file_handler: &mut FileHandler, configs: &mut Vec<ParserConfig>) -> Result<u32, Box<dyn Error>> {
-    let t0 = Instant::now();
+//    let t0 = Instant::now();
 
     let mut text_block = String::new();
 
@@ -35,7 +35,7 @@ pub fn read_log(file_handler: &mut FileHandler, configs: &mut Vec<ParserConfig>)
         if len == 0 {
             break;
         }
-        println!("Read block {} bytes long", len);
+        //println!("Read block {} bytes long", len);
         for config in configs.iter() {
             let results = search(&config.regex, &text_block);
         
@@ -46,8 +46,8 @@ pub fn read_log(file_handler: &mut FileHandler, configs: &mut Vec<ParserConfig>)
         }
     }
 
-    println!("Parsed {} groups", sendCt);
-    println!("Read/parse Duration: {:?}", t0.elapsed());
+//    println!("Parsed {} groups", sendCt);
+//    println!("Read/parse Duration: {:?}", t0.elapsed());
     Ok(sendCt)
 }
 

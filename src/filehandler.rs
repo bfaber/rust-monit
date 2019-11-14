@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::os::unix::fs::MetadataExt;
 use std::io;
+use std::fs;
 use std::io::{Result, Error};
 use std::fs::OpenOptions;
 use std::io::BufReader;
@@ -31,15 +32,17 @@ impl FileHandler {
     pub fn read_file(&mut self, text: &mut String) -> Result<usize> {
         text.clear();
         let len = self.reader.read_to_string(text)?;
-        println!("read_to_string len {}", len);
+        //println!("read_to_string len {}", len);
         if len == 0 {
             // check if rolled
-            let maybe_rolled_file = OpenOptions::new().read(true).open(&self.filename)?;
-            let possibly_new_inode = maybe_rolled_file.metadata().unwrap().ino();
-            println!("inode: {}, possibly_new_inode: {}", self.inode, possibly_new_inode);
+            //let maybe_rolled_file = OpenOptions::new().read(true).open(&self.filename)?;
+            //let possibly_new_inode = maybe_rolled_file.metadata().unwrap().ino();
+            let possibly_new_inode = fs::metadata(&self.filename).unwrap().ino();
+            //println!("inode: {}, possibly_new_inode: {}", self.inode, possibly_new_inode);
             if possibly_new_inode != self.inode {
                 // now we should try to read from the new file
-                self.file = maybe_rolled_file;
+                //self.file = maybe_rolled_file;
+                self.file = OpenOptions::new().read(true).open(&self.filename)?;
                 let buf_cpy = self.file.try_clone()?;
                 self.reader = BufReader::new(buf_cpy);
                 let len = self.reader.read_to_string(text)?;

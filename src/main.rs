@@ -63,7 +63,7 @@ fn main() {
                                                           &mut regex_bundle.parser_configs);
                 match read_res {
                     Ok(lineCt) => {
-                        println!("Parsed {} lines from log {}", lineCt, filename);
+                        //println!("Parsed {} lines from log {}", lineCt, filename);
                         if lineCt == 0 {
                             thread::sleep(Duration::from_millis(10));
                         }
@@ -80,10 +80,9 @@ fn main() {
     let mongo_insert_handler = thread::spawn(move || {
         loop {
             for config in list_of_rec_cfgs.iter() {
-                let insertDt = Instant::now();
                 mongodb.insertRecords(&config);
+                println!("Sleeping 100ms");
                 thread::sleep(Duration::from_millis(100));
-                println!("DT::MongoInsert::{} {:?}", config.base_config.filename, insertDt.elapsed());
             }
         }
     });
