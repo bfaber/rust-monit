@@ -33,7 +33,10 @@ pub struct RegexBundle {
 }
 
 impl Config {
-    pub fn new(regStr: String, filename: String, key: String, collectionName: String) -> Result<(RecordConfig, ParserConfig), Box<dyn Error>>  {
+    pub fn new(regStr: String,
+               filename: String,
+               key: String,
+               collectionName: String) -> Result<(RecordConfig, ParserConfig), Box<dyn Error>>  {
 
         // todo: maybe pull out the regex instantiation to make the Config generation certain
         let regex = Regex::new(regStr.as_str())?;

@@ -46,7 +46,7 @@ pub fn read_log(file_handler: &mut FileHandler, configs: &mut Vec<ParserConfig>)
         }
     }
 
-//    println!("Parsed {} groups", sendCt);
+    println!("Parsed {} groups", sendCt);
 //    println!("Read/parse Duration: {:?}", t0.elapsed());
     Ok(sendCt)
 }

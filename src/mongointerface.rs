@@ -5,9 +5,11 @@ use std::error::Error;
 use std::process;
 use std::time::{Instant, Duration};
 
+/*
 use mongodb::{Bson, bson, doc};
 use mongodb::{Client, ThreadedClient};
 use mongodb::db::ThreadedDatabase;
+ */
 
 use config::Config;
 use config::RecordConfig;
@@ -15,67 +17,101 @@ use config::ParserConfig;
 
 use recordprocessor::Record;
 
+use std::sync::Arc;
+use mongo_driver::client::{Client,ClientPool,Uri};
+use mongo_driver::cursor::Cursor;
+use mongo_driver::collection::{BulkOperationOptions, BulkOperation};
+use mongo_driver::write_concern::WriteConcern;
+use bson::{bson,doc,Document};
+use bson::ordered::OrderedDocument;
 
 pub struct MongoInterface {
     host: String,
     port: u16,
-    client: Client,
+    database: String,
+    // maintain where to get config, can update later.
+    // Only one config collection per monit process.
+    config_coll: String, 
+    //client: Client,
+    client_pool: Arc<ClientPool>,
 }
 
 impl MongoInterface {
 
-    pub fn new(host:String, port: u16) -> MongoInterface {
+    pub fn new(host:String, port: u16, database: String, config_coll: String) -> MongoInterface {
 
-        let client = Client::connect(&host, port).expect("Problem connecting to Mongo");
-        /*
-        let uri = Uri::new("mongodb://localhost:27017/").unwrap();
-        let pool = Arc::new(ClientPool::new(uri.clone(), None));
-        let client = pool.pop();
-        client.get_server_status(None).unwrap();
-         */
+        //let client = Client::connect(&host, port).expect("Problem connecting to Mongo");
 
-        MongoInterface { host, port, client }
+        // just added this to see if new client will work
+        let mut uriStr = String::from("mongodb://");
+        uriStr.push_str(&host);
+        uriStr.push(':');
+        uriStr.push_str(&port.to_string());
+        // "mongodb://localhost:27017/"
+        let uri = Uri::new(uriStr).unwrap();
+        let pool = Arc::new(ClientPool::new(uri.clone(), None));        
+
+        MongoInterface { host, port, database, config_coll, client_pool: pool }
     }
     
-    pub fn get_config(&mut self, database: String, configCollection: String) -> Vec<Result<(RecordConfig, ParserConfig), Box<dyn Error>>> {
+    pub fn get_config(&mut self) -> Vec<Result<(RecordConfig, ParserConfig), Box<dyn Error>>> {
         let mut configs = Vec::new();
-        
-        let coll = self.client.db(database.as_str()).collection(configCollection.as_str());
-        
-        // Find the document and receive a cursor
-        let cursor = coll.find(Some(doc!{}), None)
-            .ok().expect("Failed to execute find.");
+       
+        //let coll = self.client.db(self.database.as_str()).collection(self.config_coll.as_str());
+        // client_pool.pop() possibly blocks
+        // client_pool.pop() -> Client
+        // The client will be automatically added back to the pool when it goes out of scope.
+        // pop() may block
+        let client = self.client_pool.pop();
 
-        // cursor.next() returns an Option<Result<Document>>
-        for result in cursor {
-            let mut regStr         = String::new();
-            let mut filename       = String::new();
-            let mut key            = String::new();
-            let mut collectionName = String::new();
-
-            if let Ok(item) = result {
-                if let Some(&Bson::String(ref filenm)) = item.get("filename") {
-                    println!("filename: {}", filenm);
-                    filename = filenm.clone();
-                }
-                if let Some(&Bson::String(ref regx)) = item.get("regex") {
-                    println!("regex: {}", regx);
-                    regStr = regx.clone();
-                }            
-                if let Some(&Bson::String(ref k)) = item.get("key") {
-                    println!("key: {}", k);
-                    key = k.clone();
-                }            
-                if let Some(&Bson::String(ref collNm)) = item.get("collectionName") {
-                    println!("collectionName: {}", collNm);
-                    collectionName = collNm.clone();
-                }            
-            }
-            configs.push(Config::new(regStr, filename, key, collectionName));
+        if let Err(status_err) = client.get_server_status(None) {
+            println!("Server returned error {:?}", status_err);
         }
+        
+        let coll = client.get_collection(self.database.as_str(), self.config_coll.as_str());
+        
+        println!("before find coll: {:?}", self.config_coll.as_str());
+        println!("before find db: {:?}", self.database.as_str());
+        let res_cursor = coll.find(&bson::ordered::OrderedDocument::new(), None);
+        println!("after find");
+        let res_cursor = match res_cursor {
+            // cursor.next() returns an Option<Result<Document>>
+            // find returns a Result<Cursor<Result<Document>>>
 
+            Ok(cursor) => {
+                for result in cursor {
+                    println!("result in cursor {:?}", result);
+                    let mut reg_str         = String::new();
+                    let mut filename        = String::new();
+                    let mut key             = String::new();
+                    let mut collection_name = String::new();
+                    
+                    if let Ok(doc) = result {
+                        if let Some(someBson) = doc.get("filename") {
+                            println!("filename: {}", filename);
+                            filename = someBson.as_str().unwrap().to_string();
+                        }
+                        if let Some(someBson) = doc.get("regex") {
+                            reg_str = someBson.as_str().unwrap().to_string();
+                        }
+                        if let Some(someBson) = doc.get("key") {
+                            key = someBson.as_str().unwrap().to_string();
+                        }
+                        if let Some(someBson) = doc.get("collectionName") {
+                            collection_name = someBson.as_str().unwrap().to_string();
+                        }
+
+                    }
+                    configs.push(Config::new(reg_str, filename, key, collection_name));
+                }
+            },
+            
+            Err(e) => {
+                println!("Find config error: {:?}", e);
+            },
+        };
+        println!("after match");
         configs
-
     }
 
     pub fn insertRecords(&mut self, config: &RecordConfig) {
@@ -102,8 +138,25 @@ impl MongoInterface {
             // need to figure out how to use this db obj on self so that I can call
             // insertRecords in a loop
             // I think actually changing to &mut self in the sig fixes this
-            let coll = self.client.db("test").collection(config.base_config.collectionName.as_str());
+            //let coll = self.client.db("test").collection(config.base_config.collectionName.as_str());
+            let client = self.client_pool.pop();
+            let coll = client.get_collection(self.database.as_str(), config.base_config.collectionName.as_str());
 
+            let bulk_opts = BulkOperationOptions{ ordered: false, write_concern: WriteConcern::default() };
+            let bulk_op   = coll.create_bulk_operation(Some(bulk_opts).as_ref());
+            for doc in docs {
+                bulk_op.insert(&doc);
+            }
+            let bulk_op_result = bulk_op.execute();
+            match bulk_op_result {
+                Ok(res) => {
+                    println!("Bulk insert successful. Inserted {} docs", docs_len);
+                },
+                Err(bulk_op_err) => {
+                    println!("Bulk insert failed! {}", bulk_op_err);
+                }                    
+            }
+            /*
             let insert_result = coll.insert_many(docs, None);
 
             match insert_result {
@@ -127,6 +180,7 @@ impl MongoInterface {
                     process::exit(1);
                 },
             }
+             */
         }
     }
 }

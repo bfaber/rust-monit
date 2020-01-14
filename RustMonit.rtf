@@ -19,4 +19,8 @@ The record processor just has a to the same config objects that the log reader h
 3. mongo transactions?\
 4. separate into two threads.\
 5. Log rolling. \
+\
+\
+questions:\
+Do we need to preserve the order of the records parsed?  The C++ version will insert in relative order to seen in log.  This mongo_driver might not perform all the inserts in order unless configured to.  So set the ordered flag to true in the BulkOperationOptions.  \
 }
